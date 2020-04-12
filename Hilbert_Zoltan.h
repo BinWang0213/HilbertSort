@@ -1,5 +1,4 @@
 #pragma once
-#include "SBoundingBox3d.h"
 #include <iostream>
 
 static unsigned const int IMAX = ~(0U);
@@ -290,32 +289,36 @@ inline void Zoltan_quicksort_pointer_inc_double(
 }
 
 //---------------------------Main function----------------------------
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatD;
 
-inline void Zoltan_LocalHSFC_Order(int dim, std::vector<SPoint3*> &pts ) {
+inline void Zoltan_LocalHSFC_Order(int dim, MatD&pts ) {
     //Modified from zoltan/src/order/hsfcOrder.c
-    int n = pts.size();
+    int n = pts.rows();
     int numGeomDims = dim;
 
     /******************************************************************/
     /* Scale Pts Into Unit Box [0,1] x [0,1] x [0,1]
     /******************************************************************/
-    std::vector<SPoint3> pts_scale(n);
-    
-    SBoundingBox3d bbox;
-    for (auto v : pts) bbox += *v;
-    printf("Bbox(%lf,%lf,%lf)-(%lf,%lf,%lf)\n", bbox.min()[0], bbox.min()[1], bbox.min()[2],
-        bbox.max()[0], bbox.max()[1], bbox.max()[2]);
-    bbox *= 1.01;
+    MatD pts_scale(pts);
+
+    Eigen::ArrayXd bbox_min(3), bbox_max(3);
+    for (int i = 0; i < 3; ++i) {//Find bounding box
+        bbox_min(i) = pts.col(i).minCoeff();  bbox_max(i) = pts.col(i).maxCoeff();
+    }
+    bbox_min -= 0.01 * bbox_min; bbox_max += 0.01 * bbox_max;//enlarge bbox slightly
+    //printf("Bbox="); std::cout << bbox_min.transpose() <<" " << bbox_max.transpose()<< std::endl;
 
 
-    SPoint3 bbox_width = bbox.max() - bbox.min();
-    for (int i = 0; i < n; ++i) {
-        pts_scale[i] = *pts[i] - bbox.min();
-        pts_scale[i] /= bbox_width;
+    Eigen::ArrayXd bbox_width = bbox_max - bbox_min;
+    for (int i = 0; i < n; ++i) //scale pts into unit box
+        for (int j = 0; j < 3; ++j) {
+            pts_scale(i, j) -= bbox_min(j);
+            pts_scale(i, j) /= bbox_width(j);
+        }
         //printf("(%lf,%lf,%lf)->(%lf,%lf,%lf)\n", pts[i]->at(0), pts[i]->at(1), pts[i]->at(2),
         //    pts_scale[i][0], pts_scale[i][1], pts_scale[i][2]);
-    }
-
+    //std::cout << pts_scale << std::endl;
+    
     /******************************************************************/
     /* Generate hsfc keys and indices to be sorted                    */
     /******************************************************************/
@@ -333,27 +336,34 @@ inline void Zoltan_LocalHSFC_Order(int dim, std::vector<SPoint3*> &pts ) {
     hsfcKey = (double*)malloc(n * sizeof(double));
     coordIndx = (int*)malloc(n * sizeof(int));
     for (int i = 0; i < n; ++i) {
-        hsfcKey[i] = fhsfc(pts_scale[i].data());
+        hsfcKey[i] = fhsfc(&pts_scale.data()[i*3]);
         coordIndx[i] = i;
         //printf("%d %.15lf\n", coordIndx[i], hsfcKey[i]);
     }
-
+    
     /******************************************************************/
     /* Sort indices based on keys                                     */
     /******************************************************************/
+    
     auto start = std::chrono::system_clock::now();
     Zoltan_quicksort_pointer_inc_double(coordIndx, hsfcKey, 0, n - 1);
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     printf("\tSortTime=%d ms\n", elapsed.count());
 
-    //Swap point based on sorted indices
-    for (int i = 0; i < n; ++i) pts_scale[i] = *pts[i];
+    
+    //Update input based on sorted order 
+    pts_scale = pts;
     for (int i = 0; i < n; ++i) {
-        int new_i = coordIndx[i];
-        *pts[i] = pts_scale[new_i];
-        //printf("%d(%d) - (%lf,%lf,%lf)\n", i,new_i,pts[i]->at(0), pts[i]->at(1), pts[i]->at(2));
+        pts.row(i)=pts_scale.row(coordIndx[i]);
+        //printf("%d->%d\n", i, coordIndx[i]);
     }
+    
+    //printf("Before=\n");
+    //std::cout << pts_scale << std::endl;
+
+    //printf("After=\n");
+    //std::cout << pts << std::endl;
 
     free(hsfcKey);
     free(coordIndx);

@@ -7,15 +7,16 @@
 #include <random>
 #include <chrono>
 
-#include "Hilbert_gmsh.h"
+#include <Eigen/Dense>
+
 #include "Hilbert_Zoltan.h"
 
 
-void writeConnectivityLine2VTK(const std::string& fileName, std::vector<SPoint3*> verts) {
+void writeConnectivityLine2VTK(const std::string& fileName, MatD vertices) {
 
     std::ofstream out(fileName);
     int NumSLs = 1;
-    int numVertices = verts.size();
+    int numVertices = vertices.rows();
 
     out << "# vtk DataFile Version 4.1\n";
     out << "vtk output\n";
@@ -24,13 +25,13 @@ void writeConnectivityLine2VTK(const std::string& fileName, std::vector<SPoint3*
     out << "\n";
 
     out << "POINTS " << numVertices << " float\n";
-    for (auto& v : verts)
-            out << v->x() << " " << v->y() << " " << v->z() << std::endl;
+    for (unsigned int i = 0; i < numVertices; ++i)
+            out << vertices(i,0) << " " << vertices(i, 1) << " " << vertices(i, 2) << std::endl;
     
     out << "\n";
 
     out << "VERTICES " << numVertices << " " << numVertices*2 << std::endl;
-    for (int i = 0; i < verts.size(); i++)
+    for (int i = 0; i < numVertices; i++)
         out << 1 << " " << i << std::endl;
 
     out << "\n";
@@ -38,7 +39,7 @@ void writeConnectivityLine2VTK(const std::string& fileName, std::vector<SPoint3*
     out << "LINES " << NumSLs << " " << numVertices + NumSLs << std::endl;
     int vertexID = 0;
     out << numVertices;
-    for (int i = 0; i < verts.size(); i++) {
+    for (int i = 0; i < numVertices; i++) {
         out << " " << vertexID;
         vertexID += 1;
     }
@@ -58,10 +59,13 @@ void writeConnectivityLine2VTK(const std::string& fileName, std::vector<SPoint3*
 
 
 
-void appendPtsInBox(std::vector<SPoint3*>& vertices, int NumPts,
+void appendPtsInBox(MatD& vertices, int NumPts,
     double BoundingBoxXmin, double BoundingBoxXmax,
     double BoundingBoxYmin, double BoundingBoxYmax,
     double BoundingBoxZmin, double BoundingBoxZmax) {
+
+    MatD vert_old(vertices);
+    MatD vert_new(NumPts, 3);
 
     for (unsigned int i = 0; i < NumPts; ++i) {
 
@@ -73,55 +77,23 @@ void appendPtsInBox(std::vector<SPoint3*>& vertices, int NumPts,
         yr = BoundingBoxYmin + yr * (BoundingBoxYmax - BoundingBoxYmin);
         zr = BoundingBoxZmin + zr * (BoundingBoxZmax - BoundingBoxZmin);
 
-        SPoint3* v = new SPoint3(xr, yr, zr);
-        vertices.push_back(v);
+        vert_new.row(i) << xr, yr, zr;
         //printf("(%d)%lf,%lf,%lf\n", i, xr, yr, zr);
     }
 
+    vertices.resize(vertices.rows() + NumPts, 3);
+    vertices << vert_old, vert_new;
 }
 
 int main()
 {
-    //-----------------Gmsh-------------------
-    size_t numPts = 10000;
-    {
-        printf("[Gmsh] Sorting.....\n");
-
-        //Generate random points
-        std::vector<SPoint3*> vertices;
-
-        //Append random pts on a large box
-        appendPtsInBox(vertices, numPts,         //Container, NumPts
-            0.0, 10.0, 0.0, 10.0, 0.0, 10.0);//Box: Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
-
-        //Append random pts on a small box
-        appendPtsInBox(vertices, numPts,        //Container, NumPts
-            0.0, 1.0, 0.0, 1.0, 0.0, 1.0);//Box: Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
-
-        //Random the input pts again
-        auto rng = std::default_random_engine{};
-        std::shuffle(std::begin(vertices), std::end(vertices), rng);
-
-        //writeConnectivityLine2VTK("BeforeSort.vtk", vertices);
-
-        // HilbertSort h;
-        auto start = std::chrono::system_clock::now();
-        HilbertSort h(1000);
-        h.Apply(vertices);
-        auto end = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "RunTime=" << elapsed.count() << "ms ";
-
-        printf("\t Done !\n");
-        writeConnectivityLine2VTK("AfterSort.vtk", vertices);
-    }
-    
+    size_t numPts = 1000;
 
     //-----------------Zoltan-------------------
     {
         printf("[Zoltan] Sorting.....\n");
 
-        std::vector<SPoint3*> vertices;
+        MatD vertices;
 
         //Append random pts on a large box
         appendPtsInBox(vertices, numPts,         //Container, NumPts
@@ -130,18 +102,25 @@ int main()
         //Append random pts on a small box
         appendPtsInBox(vertices, numPts,        //Container, NumPts
             0.0, 1.0, 0.0, 1.0, 0.0, 1.0);//Box: Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
+        //std::cout << vertices<<std::endl;
 
+        printf("Random rows\n");
         //Random the input pts again
-        auto rng = std::default_random_engine{};
-        std::shuffle(std::begin(vertices), std::end(vertices), rng);
+        Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(vertices.rows());
+        perm.setIdentity();
+        std::random_shuffle(perm.indices().data(), perm.indices().data() + perm.indices().size());
+        vertices = perm * vertices; // permute rows
 
-        //writeConnectivityLine2VTK("BeforeSort_Zontal.vtk", vertices);
+        //std::cout << vertices << std::endl;
+
+        writeConnectivityLine2VTK("BeforeSort_Zontal.vtk", vertices);
 
         auto start = std::chrono::system_clock::now();
         Zoltan_LocalHSFC_Order(3,vertices);
         auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         std::cout << "RunTime=" << elapsed.count() << "ms ";
+        //std::cout << vertices << std::endl;
 
         printf("\t Done !\n");
         writeConnectivityLine2VTK("AfterSort_Zontal.vtk", vertices);
