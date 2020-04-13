@@ -62,10 +62,11 @@ class CMakeBuild(build_ext):
 
 setup(
     name='pyHilbertSort',
-    version='0.0.1',
-    author='Dean Moldovan',
-    author_email='dean0x7d@gmail.com',
-    description='A test project using pybind11 and CMake',
+    version='1.0.0',
+    author='Bin Wang',
+    author_email='binwang.0213@gmail.com',
+    description='A light-weight hilbert curve sorting library for point and mesh',
+    url="https://github.com/BinWang0213/HilbertSort",
     long_description='',
     ext_modules=[CMakeExtension('pyHilbertSort')],
     cmdclass=dict(build_ext=CMakeBuild),
