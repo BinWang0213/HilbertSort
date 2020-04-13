@@ -28,8 +28,8 @@ Just clone this repository and pip install. Note the `--recursive` option which 
 needed for the pybind11 submodule:
 
 ```bash
-git clone --recursive https://github.com/pybind/pyHilbertSort.git
-pip install ./pyHilbertSort
+git clone --recursive https://github.com/BinWang0213/HilbertSort.git
+pip install ./HilbertSort
 ```
 
 With the `setup.py` file included in this example, the `pip install` command will
@@ -61,7 +61,7 @@ the extension module to generate beautiful documentation in a variety formats.
 The following command generates HTML-based reference documentation; for other
 formats please refer to the Sphinx manual:
 
- - `cd pyHilbertSort/docs`
+ - `cd HilbertSort/docs`
  - `make html`
 
 
@@ -75,8 +75,9 @@ terms and conditions of this license.
 ## Test call
 
 ```python
-import pyHilbertSort
-pyHilbertSort.add(1, 2)
+import pyHilbertSort as m
+pts_sort,idx_sort=m.hilbertSort(3, np.random.rand(5,3),True)
+print(pts_sort,idx_sort)
 ```
 
 
