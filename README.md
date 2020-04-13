@@ -30,6 +30,9 @@ Or build from source: Just clone this repository and pip install. Note the `--re
 needed for the pybind11 submodule:
 
 ```bash
+conda install -c anaconda cmake
+conda install -c conda-forge eigen
+
 git clone --recursive https://github.com/BinWang0213/HilbertSort.git
 cd ./HilbertSort
 python setup.py install 
