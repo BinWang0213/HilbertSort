@@ -38,8 +38,8 @@ cd ./HilbertSort
 python setup.py install 
 ```
 
-With the `setup.py` file included in this example, the `pip install` command will
-invoke CMake and build the pybind11 module as specified in `CMakeLists.txt`.
+The `python setup.py install` command will
+invoke CMake and build the code as specified in `CMakeLists.txt`.
 
 ## Usage
 
