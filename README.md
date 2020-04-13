@@ -1,6 +1,6 @@
 # pyHilbertSort
 
-A light-weight hilbert curve sorting library for point and mesh
+A light-weight hilbert curve sorting library for point and mesh modified from Zoltan @ http://www.cs.sandia.gov/Zoltan/dev_html/dev_hsfc.html
 
 
 ## Prerequisites
