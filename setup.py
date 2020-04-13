@@ -1,13 +1,39 @@
 import os
+import glob,shutil
 import re
 import sys
 import platform
 import subprocess
 
-from setuptools import setup, Extension
+from setuptools import setup, Extension,Command
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
+
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+    CLEAN_FILES = './build ./dist ./*.pyc ./*.tgz ./*.egg-info'.split(' ')
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        here=os.getcwd()
+
+        for path_spec in self.CLEAN_FILES:
+            # Make paths absolute and relative to this path
+            abs_paths = glob.glob(os.path.normpath(os.path.join(here, path_spec)))
+            for path in [str(p) for p in abs_paths]:
+                if not path.startswith(here):
+                    # Die if path in CLEAN_FILES is absolute + outside this directory
+                    raise ValueError("%s is not a path inside %s" % (path, here))
+                print('removing %s' % os.path.relpath(path))
+                shutil.rmtree(path)
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
@@ -69,6 +95,7 @@ setup(
     url="https://github.com/BinWang0213/HilbertSort",
     long_description='',
     ext_modules=[CMakeExtension('pyHilbertSort')],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=dict(build_ext=CMakeBuild,
+                  clean=CleanCommand),
     zip_safe=False,
 )

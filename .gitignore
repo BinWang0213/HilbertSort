@@ -3,7 +3,9 @@ dist/
 _build/
 _generate/
 .vs/
+.ipynb_checkpoints/
 x64/
 *.so
 *.py[cod]
 *.egg-info
+*.vtk
