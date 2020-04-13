@@ -1,4 +1,4 @@
-# pyHilbertSort for pybind11
+# pyHilbertSort
 
 An example [pybind11](https://github.com/pybind/pybind11) module built with a
 CMake-based build system. This is useful for C++ codebases that have an existing
@@ -12,12 +12,14 @@ CMake project structure.
 * A compiler with C++11 support
 * CMake >= 2.8.12
 * Eigen 3.3.7
+* pybind11
 
 **On Windows**
 
 * Visual Studio 2015 (required for all Python versions, see notes below)
 * CMake >= 3.1
 * Eigen 3.3.7
+* pybind11
 
 
 ## Installation
