@@ -276,7 +276,7 @@ inline void Zoltan_quicksort_pointer_inc_double(
 )
 {
     int i, j;
-    double temp;
+    int temp;
 
     /* sort in decreasing order */
     Zoltan_quicksort_pointer_dec_double(sorted, val, start, end);

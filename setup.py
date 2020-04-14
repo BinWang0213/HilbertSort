@@ -88,7 +88,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='pyHilbertSort',
-    version='1.0.1',
+    version='1.0.2',
     author='Bin Wang',
     author_email='binwang.0213@gmail.com',
     description='A light-weight hilbert curve sorting library for point and mesh',
