@@ -2,7 +2,7 @@ pyHilbertSort
 ==============================================================================================
 Bin Wang (binwang.0213@gmail.com), Craft and Hawkins Department of Petroleum Engineering, Louisiana State University, Baton Rouge, US
 
-A light-weight hilbert curve sorting library for point and mesh modified from Zoltan @ http://www.cs.sandia.gov/Zoltan/dev_html/dev_hsfc.html
+A light-weight hilbert curve sorting library for point and mesh, core algorithm is modified from Zoltan @ http://www.cs.sandia.gov/Zoltan/dev_html/dev_hsfc.html
 
 <p align="center">
   <img src = "https://github.com/BinWang0213/HilbertSort/blob/master/examples/OrigOrder.png" height="250">
