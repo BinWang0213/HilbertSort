@@ -51,7 +51,7 @@ invoke CMake and build the code as specified in `CMakeLists.txt`.
 
 ```python
 import pyHilbertSort as m
-pts_sort,idx_sort=m.hilbertSort(3, np.random.rand(5,3),True)
+pts_sort,idx_sort=m.hilbertSort(3, np.random.rand(5,3))
 print(pts_sort,idx_sort)
 ```
 
