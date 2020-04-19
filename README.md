@@ -55,6 +55,8 @@ pts_sort,idx_sort=m.hilbertSort(3, np.random.rand(5,3))
 print(pts_sort,idx_sort)
 ```
 
+Example of Gmsh node and element reordering can be found @ ```examples/Gmsh_reordering.ipynb```
+
 ## Special notes for Windows
 
 **Compiler requirements**
